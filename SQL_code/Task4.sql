@@ -8,7 +8,13 @@ SELECT
 	people.people_id,
 	"[" || people.people_first_name || "]"  || "[" || people.people_surname || "]"  AS full_name,
 	ward.ward_specialty,
-	COUNT(people.people_id) AS times
+	COUNT(
+	DISTINCT CASE
+		WHEN (allocation_date = "2024-01-19" AND allocation_shift = "Evening")  THEN "2024-01-19_Evening"
+		WHEN (allocation_date = "2024-04-07" AND allocation_shift = "Morning") THEN "2024-04-07_Morning"
+		WHEN (allocation_date = "2024-06-21" AND allocation_shift = "Morning") THEN "2024-06-21_Morning"
+		WHEN (allocation_date = "2024-08-27" AND allocation_shift = "Evening") THEN "2024-08-27_Evening"
+	END) AS total_days
 FROM
 	allocation
 LEFT JOIN
@@ -26,7 +32,10 @@ WHERE
 GROUP BY
 	people.people_id
 HAVING
-	times = 4
+	total_days ==4
+
+
+
 	
 
 	
