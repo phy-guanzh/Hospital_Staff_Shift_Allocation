@@ -5,6 +5,8 @@
 \usepackage{listings}
 \usepackage{rotating}
 \usepackage{xcolor}
+\usepackage{float}
+\usepackage{pdfpages}
 \usepackage[a4paper, margin=0.5in]{geometry} 
 
 \lstdefinestyle{sqlstyle}{
@@ -20,13 +22,29 @@
     frame=single,
 }
 
-\title{Hospital Staff Shift Allocation}
+\title{\textbf{SQL Queries for Hospital Staff Shift Allocation \\ Task-Based Report}}
 \author{Zhe Guan  \\ email: \texttt{zg2u24@soton.ac.uk}}
 \date{October 2024}
 
 \begin{document}
 
 \maketitle
+
+This report primarily addresses seven tasks based on a Hospital Staff Shift Allocation dataset using SQL queries.
+
+The main environment and some details are described below:
+
+\begin{itemize}
+    \item \textbf{Database System:} SQLite
+    \item \textbf{Validation Tool:} Queries validated with DB Browser for SQLite.
+    \item \textbf{Join Type:} To avoid possible data loss due to missing values, \texttt{LEFT JOIN} is commonly used.
+    \item \textbf{Approach for Tasks 6 and 7:} Two methods are provided for each task.
+    \item \textbf{Name Output Format:} To meet the task requirements, all output names follow the format '[first name][surname]'. For example, '[GEORGIA][STEVENSON]'.
+    \item \textbf{Available Output Formats:} Magic commands are used to display SQL query results in Jupyter Notebook, as shown in the attachment~\ref{attachment}.
+    \item \textbf{Materials:} All relevant materials except original dataset are available on GitHub at \url{https://github.com/phy-guanzh/Hospital_Staff_Shift_Allocation}.
+\end{itemize}
+
+
 
 \section{Task 1}
 \textbf{Task: Output the total number of hours that the staff member with ID number 10566 has worked in the given time period. You can assume that each shift lasts for 8 hours.}
@@ -44,10 +62,10 @@ GROUP BY
     allocation_people_id;
 \end{lstlisting}
 
-Answer is provided in Table.~\ref{tab:task1}
+Answer is provided in Table ~\ref{tab:task1}.
 
 
-\begin{table}[h]
+\begin{table}[H]
     \centering
     \begin{tabular}{|c|c|c|}
         \hline
@@ -63,6 +81,7 @@ Answer is provided in Table.~\ref{tab:task1}
 \section{Task 2}
 
 \textbf{Task: Output a list of staff members who were born in 1957, ordered from oldest to youngest, giving their full names written as “[first name] [surname]” and their dates of birth.}
+
 
 \begin{lstlisting}[style=sqlstyle]
 SELECT
@@ -82,10 +101,10 @@ ORDER BY
 
 \end{lstlisting}
 
-Answer is provided in Table.~\ref{tab:task2}
+Answer is provided in Table.~\ref{tab:task2}.
 
 
-\begin{sidewaystable}[h]
+\begin{sidewaystable}[htbp]
 \centering
 \small
 \begin{tabular}{|c|c|c|c|c|c|c|c|}
@@ -130,9 +149,9 @@ WHERE ward.ward_specialty ="Neurology" AND allocation_date = "2024-06-01"
 \end{lstlisting}
 
 
-Answer is provided in Table.~\ref{tab:task3}
+Answer is provided in Table.~\ref{tab:task3}.
 
-\begin{sidewaystable}[h]
+\begin{sidewaystable}[htbp]
 \centering
 \small
 \begin{tabular}{|c|c|c|c|c|c|}
@@ -155,7 +174,7 @@ Answer is provided in Table.~\ref{tab:task3}
 \hline 16 & 10968 & [FLORENCE][KERR] & 2024-06-01 & N1 & Neurology \\
 \hline
 \end{tabular}
-   \caption{List of staff members who were born in 1957}
+   \caption{List of staff who were working in the Neurology Ward on 2024-09-01}
     \label{tab:task3}
 \end{sidewaystable}
 
@@ -171,7 +190,13 @@ SELECT
     people.people_id,
     "[" || people.people_first_name || "]"  || "[" || people.people_surname || "]"  AS full_name,
     ward.ward_specialty,
-    COUNT(people.people_id) AS times
+    COUNT(
+    DISTINCT CASE
+        WHEN (allocation_date = "2024-01-19" AND allocation_shift = "Evening") THEN "2024-01-19_Evening"
+        WHEN (allocation_date = "2024-04-07" AND allocation_shift = "Morning") THEN "2024-04-07_Morning"
+        WHEN (allocation_date = "2024-06-21" AND allocation_shift = "Morning") THEN "2024-06-21_Morning"
+        WHEN (allocation_date = "2024-08-27" AND allocation_shift = "Evening") THEN "2024-08-27_Evening"
+    END) AS total_days
 FROM
     allocation
 LEFT JOIN
@@ -189,21 +214,24 @@ WHERE
 GROUP BY
     people.people_id
 HAVING
-    times = 4
+    total_days ==4
 
 \end{lstlisting}
 
-And the output showed in table.\ref{tab:task4}, and "RONNIE WHITE" should be focused.
 \begin{table}[h]
     \centering
 \begin{tabular}{|c|c|c|c|}
 \hline people\_id & full\_name & ward\_specialty & times \\
 \hline 10737 & [RONNIE][WHITE] & Orthopaedics & 4 \\
+\hline 10812 & [MATILDA][JAMIESON] & Orthopaedics & 4 \\
 \hline
 \end{tabular}
-    \caption{List of staff with suspicious behaviour on the Orthopaedic Wards}
+    \caption{List of staff with suspicious behaviour on the Orthopaedic Wards on all specified shifts.}
     \label{tab:task4}
 \end{table}
+
+And the output showed in table.\ref{tab:task4}, and "RONNIE WHITE" and "MATILDA JAMIESON" should be focused.
+
 
 \section{Task 5}
 
@@ -239,9 +267,9 @@ ORDER BY
     END
 \end{lstlisting}
 
-Answer is provided in Table.~\ref{tab:task5}
+Answer is provided in Table.~\ref{tab:task5}.
 
-\begin{table}[h]
+\begin{table}[htbp]
     \centering
 \begin{tabular}{|c|c|c|c|c|c|}
 \hline & people\_band & \multicolumn{1}{|c|}{ band\_type } & allocation\_date & allocation\_ward & num\_of\_staff \\
@@ -251,7 +279,7 @@ Answer is provided in Table.~\ref{tab:task5}
 \hline 4 & N2 & Nurse & $2024-05-01$ & ED & 18 \\
 \hline
 \end{tabular}
-   \caption{List of staff with suspicious behaviour on the Orthopaedic Wards}
+   \caption{The number of each staff type (consultant, doctor, health care assistant, nurse) working each shift for the emergency department ward (ED) on 1 May 2024}
     \label{tab:task5}
 \end{table}
 
@@ -259,7 +287,7 @@ Answer is provided in Table.~\ref{tab:task5}
 
 \textbf{Task: Output the total number of hours worked by each type of staff member (health care assistant, nurse, doctor, consultant) for each month from January to August 2024.}
 
-Here, two technical methods could be used. 
+Here, two methods could be used. 
 
 One is nested query shown below.
 
@@ -299,7 +327,7 @@ ORDER BY  ---- define the order to meet the requirement of question
 \end{lstlisting}
 
 
-Another method I prefer is Common Table Expression(CTE), which is a temporary ``table" defined within a single SQL statement. It is created using the WITH keyword and can be referenced multiple times within the main query. Compared to Nested Query, CTE has better readability and maintainability and supports recursive queries.
+Another method perfered is Common Table Expression(CTE), which is a temporary ``table" defined within a single SQL statement. It is created using the ``WITH"  keyword and can be referenced multiple times within the main query. Compared to Nested Query, CTE has better readability and maintainability and supports recursive queries.
 
 \begin{lstlisting}[style=sqlstyle]
 --- Here we apply a Common Table Expression 
@@ -352,7 +380,7 @@ ORDER BY   ---- define the order to meet the requirement of question
 	
 \end{lstlisting}
 
-The output table is provided in table~\ref{tab:task6}
+The output table is provided in Table.~\ref{tab:task6}.
 
 \begin{table}[h]
     \centering
@@ -392,7 +420,8 @@ The output table is provided in table~\ref{tab:task6}
 \hline 32 & Consultant & 08 & 16520 \\
 \hline
 \end{tabular}
-   \caption{List of staff with suspicious behaviour on the Orthopaedic Wards}
+   \caption{The total number of hours worked by each type of staff member (health care assistant,
+nurse, doctor, consultant) for each month from January to August 2024}
     \label{tab:task6}
 \end{table}
 
@@ -421,8 +450,9 @@ salary figures given in the band table are the amount paid to a member of staff 
 year’s work.}
 
 \begin{lstlisting}[style=sqlstyle]
+--- Here we apply a Nested Query
 SELECT 
-	sub.people_specialty,
+    sub.people_specialty,
     SUM( sub.times*sub.band_salary_pershift) AS total_expenses
 FROM (
     SELECT 
@@ -484,6 +514,37 @@ GROUP BY
 
 
 \end{lstlisting}
+
+The output table is provided in Table~\ref{tab:task7}.
+\begin{table}[h]
+    \centering
+\begin{tabular}{|c|c|c|}
+\hline & people\_specialty & total\_expenses \\
+\hline 1 & Cardiology & 1948361.0 \\
+\hline 2 & Emergency & 2879456.0 \\
+\hline 3 & General & 2069228.0 \\
+\hline 4 & Geriatric & 1883914.0 \\
+\hline 5 & Neurology & 960560.0 \\
+\hline 6 & Oncology & 1893381.0 \\
+\hline 7 & Opthalmology & 1085636.0 \\
+\hline 8 & Orthopaedics & 1866702.0 \\
+\hline 9 & Paediatrics & 1877119.0 \\
+\hline 10 & Psychiatry & 2064015.0 \\
+\hline 11 & Respiratory & 1845093.0 \\
+\hline
+\end{tabular}
+   \caption{The total staff costs for each specialty between 1 January 2024 and 31 August 2024.}
+    \label{tab:task7}
+\end{table}
+
+
+\section{Attachment}
+\label{attachment}
+
+Magic commands are used to display SQL query output results in Jupyter Notebook.
+
+\includepdf[pages=-]{SQL_Queries.pdf}
+
 \end{document}
 
 
